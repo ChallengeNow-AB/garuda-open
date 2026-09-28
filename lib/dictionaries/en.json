@@ -109,7 +109,49 @@
     "divisionSpaces": "spots left",
     "registrationDeadline": "Registration deadline",
     "cupDates": "Competition dates",
-    "openDivision": "View tournament"
+    "openDivision": "View tournament",
+    "registration": {
+      "eyebrow": "Registration",
+      "title": "Find your division and register.",
+      "description": "Filter by level and gender. Already have an account? Continue in the app. New here? Get started below.",
+      "intro": "Choose a division and enter your details below. We create your ChallengeNow account, player profile and team at the same time.",
+      "personHeading": "Your details",
+      "teamHeading": "Your team",
+      "accountHeading": "Create account",
+      "accountHint": "A new ChallengeNow account is included in the registration.",
+      "existingAccountCta": "Already have an account? Open the app",
+      "submit": "Complete registration",
+      "submitting": "Creating and registering…",
+      "termsPrefix": "I accept ChallengeNow's",
+      "termsLink": "privacy policy",
+      "spotsLeft": "{0} spots left",
+      "noAvailableDivisions": "There are no open divisions available for registration right now.",
+      "successTitle": "Registration complete!",
+      "successBody": "{team} is now registered for {division}.",
+      "successEmail": "You can now sign in to the ChallengeNow app with the email address and password you selected.",
+      "labels": {
+        "division": "Division",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "phone": "Phone number",
+        "birthYear": "Birth year (optional)",
+        "teamName": "Team name",
+        "email": "Email address",
+        "password": "Password"
+      },
+      "errors": {
+        "unavailable": "The selected division is no longer available.",
+        "terms": "You need to accept the privacy policy to continue.",
+        "weakPassword": "The password must contain at least {0} characters.",
+        "full": "The division filled up before the registration could be completed.",
+        "closed": "Registration for this division has closed.",
+        "profileMismatch": "The account profile details do not match. Open the app to continue.",
+        "notConfigured": "Account registration has not been enabled on this page yet.",
+        "invalidEmail": "Check that the email address is correct.",
+        "network": "Network error. Check your connection and try again.",
+        "generic": "The registration could not be completed. Please try again."
+      }
+    }
   },
   "common": {
     "viewClub": "View storefront",

@@ -5,8 +5,9 @@ import { ArrowLeft, ArrowUpRight, CalendarDays, MapPin, RefreshCcw, Trophy, User
 import { getCupDetailResult, getStorefrontDetailResult, type DetailKind } from '@/lib/api'
 import { getDictionary, isLocale, type Locale } from '@/lib/i18n'
 import { formatPrice, formatWhen } from '@/lib/format'
-import { registrationUrl, type RegistrationTarget } from '@/lib/registration'
+import type { RegistrationTarget } from '@/lib/registration'
 import type { MatchSummary, StandingSummary, StorefrontDetail, TeamSummary } from '@/lib/types'
+import { CupRegistrationForm } from '@/components/cup-registration-form'
 import { CupDetail } from '@/components/cup-detail'
 import { PlatformSection } from '@/components/platform-section'
 
@@ -59,7 +60,8 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
   const category = league?.category ?? activity?.category
   const venue = league?.locality ?? activity?.venueName ?? activity?.address?.city
   const full = activity?.capacity != null && activity.joined != null && activity.joined >= activity.capacity
-  const closed = league ? league.seasonStarted && !league.joinWhileStarted : Boolean(activity?.registrationClosed || full)
+  const ended = league ? Boolean(league.endDate && league.endDate < Date.now()) : Boolean(activity?.endDate || activity?.startDate) && new Date(activity?.endDate || activity?.startDate || '').getTime() < new Date().setHours(0, 0, 0, 0)
+  const closed = ended || (league ? (league.seasonStarted && !league.joinWhileStarted) || (league.capacity > 0 && detail.participants.length >= league.capacity) : Boolean(activity?.registrationClosed || full))
   const target: RegistrationTarget = kind === 'league' ? 'league' : kind === 'tournament' ? 'tournament' : 'event'
   const kindLabel = kind === 'league' ? dict.detail.league : kind === 'tournament' ? dict.detail.tournament : dict.detail.activity
   const price = league ? formatPrice(league.fee, league.currency, dict.common.free) : formatPrice(activity?.price, activity?.currency, dict.common.free)
@@ -83,7 +85,7 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
             <div className="mt-9">
               {closed
                 ? <span className="rounded-full bg-white/15 px-6 py-3.5 text-sm font-bold text-white/75">{dict.detail.registrationClosed}</span>
-                : <a href={registrationUrl(target, id)} className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:bg-white">{dict.detail.register}<ArrowUpRight size={17} /></a>}
+                : <a href="#registration" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:bg-white">{dict.detail.register}<ArrowUpRight size={17} /></a>}
             </div>
           </div>
           <div className="min-h-[300px] overflow-hidden lg:min-h-full">
@@ -93,6 +95,16 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
         </div>
       </section>
 
+      {!closed && <section id="registration" className="mx-auto max-w-3xl scroll-mt-8 px-5 py-12">
+        <h2 className="mb-6 text-3xl font-black">{dict.detail.register}</h2>
+        <CupRegistrationForm cupTitle={title} currency={league?.currency ?? activity?.currency} fallbackPrice={league?.fee ?? activity?.price}
+          target={target} locale={locale} dict={dict} divisions={[{
+            id, title, joined: activity?.joined ?? detail.participants.length, registrationClosed: closed,
+            targetAudience: league?.targetAudience ?? activity?.targetAudience,
+            targetGender: league?.targetGender ?? activity?.targetGender,
+            skillLevel: activity?.skillLevel,
+          }]} />
+      </section>}
       <div className="mx-auto grid max-w-[1500px] gap-4 px-5 py-8 sm:grid-cols-3 sm:px-10 lg:px-16 xl:px-24">
         <Stat value={detail.participants.length} label={dict.detail.teams} />
         <Stat value={detail.matches.length} label={dict.detail.matchesCount} />

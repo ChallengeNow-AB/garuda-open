@@ -22,6 +22,8 @@ export interface Branding {
 }
 
 export interface League {
+  targetGender?: string
+  targetAudience?: string
   id: number
   name: string
   description?: string
@@ -39,6 +41,9 @@ export interface League {
 }
 
 export interface Activity {
+  targetGender?: string
+  targetAudience?: string
+  skillLevel?: string
   id: number
   title: string
   description?: string

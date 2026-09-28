@@ -109,7 +109,49 @@
     "divisionSpaces": "platser kvar",
     "registrationDeadline": "Sista anmälningsdag",
     "cupDates": "Tävlingsdagar",
-    "openDivision": "Öppna turneringen"
+    "openDivision": "Öppna turneringen",
+    "registration": {
+      "eyebrow": "Anmälan",
+      "title": "Hitta rätt klass och anmäl dig.",
+      "description": "Filtrera på nivå och kön. Har du redan ett konto fortsätter du i appen, annars hjälper vi dig att komma igång här.",
+      "intro": "Välj klass och fyll i uppgifterna nedan. Vi skapar ditt ChallengeNow-konto, din spelarprofil och ditt lag samtidigt.",
+      "personHeading": "Dina uppgifter",
+      "teamHeading": "Ditt lag",
+      "accountHeading": "Skapa konto",
+      "accountHint": "Ett nytt ChallengeNow-konto ingår i anmälan.",
+      "existingAccountCta": "Har du redan konto? Öppna appen",
+      "submit": "Slutför anmälan",
+      "submitting": "Skapar och anmäler…",
+      "termsPrefix": "Jag godkänner ChallengeNows",
+      "termsLink": "integritetspolicy",
+      "spotsLeft": "{0} platser kvar",
+      "noAvailableDivisions": "Det finns inga öppna klasser att anmäla sig till just nu.",
+      "successTitle": "Anmälan är klar!",
+      "successBody": "{team} är nu anmält till {division}.",
+      "successEmail": "Du kan nu logga in i ChallengeNow-appen med e-postadressen och lösenordet du valde.",
+      "labels": {
+        "division": "Klass",
+        "firstName": "Förnamn",
+        "lastName": "Efternamn",
+        "phone": "Telefonnummer",
+        "birthYear": "Födelseår (valfritt)",
+        "teamName": "Lagnamn",
+        "email": "E-postadress",
+        "password": "Lösenord"
+      },
+      "errors": {
+        "unavailable": "Den valda klassen är inte längre tillgänglig.",
+        "terms": "Du behöver godkänna integritetspolicyn för att fortsätta.",
+        "weakPassword": "Lösenordet måste ha minst {0} tecken.",
+        "full": "Klassen blev full innan anmälan kunde slutföras.",
+        "closed": "Anmälan till klassen har stängt.",
+        "profileMismatch": "Kontots profiluppgifter matchar inte. Öppna appen för att fortsätta.",
+        "notConfigured": "Kontoregistreringen är inte aktiverad på den här sidan ännu.",
+        "invalidEmail": "Kontrollera att e-postadressen är korrekt.",
+        "network": "Nätverksfel. Kontrollera anslutningen och försök igen.",
+        "generic": "Anmälan kunde inte slutföras. Försök igen."
+      }
+    }
   },
   "common": {
     "viewClub": "Visa storefront",
