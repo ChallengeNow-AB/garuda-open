@@ -70,12 +70,12 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
   return (
     <>
       <section className="bg-hero text-white">
-        <div className="mx-auto grid max-w-[1500px] lg:grid-cols-[1fr_.8fr]">
-          <div className="px-5 py-12 sm:px-10 sm:py-16 lg:px-16 xl:pl-24">
+        <div className="mx-auto grid max-w-5xl items-center gap-6 px-5 py-8 sm:px-8 sm:py-10 md:grid-cols-[1fr_240px]">
+          <div className="min-w-0">
             <Link href={`/${locale}/${slug}`} className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"><ArrowLeft size={17} />{dict.detail.back}</Link>
-            <span className="mt-10 block w-fit rounded-full bg-accent px-4 py-2 text-xs font-black uppercase tracking-widest text-ink">{kindLabel}</span>
-            <h1 className="mt-5 max-w-3xl text-5xl font-black leading-[.98] tracking-[-.06em] sm:text-7xl">{title}</h1>
-            {description && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/75">{description}</p>}
+            <span className="mt-5 block w-fit rounded-full bg-accent px-4 py-2 text-xs font-black uppercase tracking-widest text-ink">{kindLabel}</span>
+            <h1 className="mt-5 max-w-3xl text-3xl font-black leading-tight tracking-[-.04em] sm:text-4xl">{title}</h1>
+            {description && <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/75">{description}</p>}
             <div className="mt-8 flex flex-wrap gap-x-7 gap-y-4 text-sm font-bold text-white/80">
               {category && <span>{category}</span>}
               {date && <span className="inline-flex items-center gap-2"><CalendarDays size={17} className="text-accent" />{date}</span>}
@@ -88,7 +88,7 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
                 : <a href="#registration" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:bg-white">{dict.detail.register}<ArrowUpRight size={17} /></a>}
             </div>
           </div>
-          <div className="min-h-[300px] overflow-hidden lg:min-h-full">
+          <div className="h-32 overflow-hidden rounded-xl sm:h-40 md:h-44">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageUrl || '/badminton.jpg'} alt="" className="h-full w-full object-cover" />
           </div>
@@ -96,7 +96,8 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
       </section>
 
       {!closed && <section id="registration" className="mx-auto max-w-3xl scroll-mt-8 px-5 py-12">
-        <h2 className="mb-6 text-3xl font-black">{dict.detail.register}</h2>
+        <div className="rounded-2xl border border-border bg-white p-5 shadow-card sm:p-8">
+        <h2 className="mb-6 text-2xl font-bold">{dict.detail.register}</h2>
         <CupRegistrationForm cupTitle={title} currency={league?.currency ?? activity?.currency} fallbackPrice={league?.fee ?? activity?.price}
           target={target} locale={locale} dict={dict} divisions={[{
             id, title, joined: activity?.joined ?? detail.participants.length, registrationClosed: closed,
@@ -104,6 +105,7 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
             targetGender: league?.targetGender ?? activity?.targetGender,
             skillLevel: activity?.skillLevel,
           }]} />
+        </div>
       </section>}
       <div className="mx-auto grid max-w-[1500px] gap-4 px-5 py-8 sm:grid-cols-3 sm:px-10 lg:px-16 xl:px-24">
         <Stat value={detail.participants.length} label={dict.detail.teams} />

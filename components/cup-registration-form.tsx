@@ -19,6 +19,10 @@ type Props = {
   dict: Dictionary
 }
 
+
+const controlClass = 'h-12 w-full min-w-0 rounded-lg border border-border bg-white px-3 text-base font-normal text-ink transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60'
+const actionClass = 'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-ink px-6 py-3 text-base font-semibold text-white transition hover:bg-brand disabled:cursor-wait disabled:opacity-60'
+
 type RegistrationResult = { registration?: { team?: { name?: string } } }
 const TEAM_TYPES = new Set(['INDIVIDUAL', 'SQUAD', 'DUO'])
 const GENDER_TYPES = new Set(['MALE', 'FEMALE', 'MIXED'])
@@ -35,14 +39,16 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
   const copy = dict.detail.registration
   const words = locale === 'sv' ? {
     level: 'Nivå', gender: 'Kön', all: 'Alla', noMatch: 'Inga klasser matchar dina filter.', reset: 'Visa alla',
-    account: 'Har du redan ett konto?', existing: 'Ja, fortsätt i appen', newAccount: 'Nej, jag är ny',
-    appHint: 'Anmäl dig med ditt befintliga konto och lag. Länken öppnar appen eller spelarwebben.',
+    account: 'Har du ett ChallengeNow-konto?', existing: 'Ja, jag har ett konto', newAccount: 'Nej, jag är ny',
+    newHint: 'När du slutför anmälan skapas ditt ChallengeNow-konto. Du kan sedan använda samma inloggning i appen för att följa tävlingen.',
+    appHint: 'Fortsätt med ditt konto i appen för att slutföra anmälan. Har du inte appen öppnas spelarwebben.',
     openApp: 'Fortsätt i appen', done: 'Du är anmäld!', appInfo: 'Ditt konto är klart. Använd samma e-postadress och lösenord i appen för att följa din anmälan, matcher och resultat.',
     select: 'Välj klass', team: 'Lag- eller spelarnamn', teamType: 'Spelform',
   } : {
     level: 'Level', gender: 'Gender', all: 'All', noMatch: 'No divisions match your filters.', reset: 'Show all',
-    account: 'Do you already have an account?', existing: 'Yes, continue in the app', newAccount: 'No, I am new',
-    appHint: 'Register with your existing account and team. The link opens the app or player website.',
+    account: 'Do you have a ChallengeNow account?', existing: 'Yes, I have an account', newAccount: 'No, I am new',
+    newHint: 'Completing your registration creates your ChallengeNow account. Use the same sign-in details in the app to follow the competition.',
+    appHint: 'Continue with your account in the app to complete registration. If you do not have the app, the player website opens.',
     openApp: 'Continue in the app', done: 'You are registered!', appInfo: 'Your account is ready. Use the same email address and password in the app to follow your registration, matches and results.',
     select: 'Choose division', team: 'Team or player name', teamType: 'Format',
   }
@@ -142,7 +148,7 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
 
   if (result) {
     return (
-      <div className="rounded-3xl border border-brand/25 bg-brand-tint p-7 text-ink" role="status">
+      <div className="space-y-4 text-ink" role="status">
         <CheckCircle2 className="h-11 w-11 text-brand" />
         <h3 className="mt-4 text-2xl font-black">{words.done}</h3>
         <p className="mt-2 leading-relaxed">{copy.successBody.replace('{team}', result.registration?.team?.name ?? '').replace('{division}', selected?.title ?? cupTitle)}</p>
@@ -153,100 +159,94 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
   }
 
   if (availableDivisions.length === 0) {
-    return <p className="rounded-2xl border border-border bg-white p-6 text-sm text-muted-foreground">{copy.noAvailableDivisions}</p>
+    return <p className="text-sm text-muted-foreground">{copy.noAvailableDivisions}</p>
   }
 
   return (
-    <form onSubmit={submit} className="space-y-7 rounded-3xl border border-border bg-white p-6 shadow-card sm:p-8">
-      <fieldset disabled={submitting || locked} className="space-y-4">
-        {divisions.length > 1 && <div className="grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-bold">{words.level}
-            <select value={level} onChange={event => { setLevel(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className="h-12 rounded-xl border border-border bg-background px-4">
-              <option value="">{words.all}</option>{levels.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-bold">{words.gender}
-            <select value={gender} onChange={event => { setGender(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className="h-12 rounded-xl border border-border bg-background px-4">
-              <option value="">{words.all}</option>{genders.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
-            </select>
-          </label>
+    <form onSubmit={submit} className="space-y-7">
+      <fieldset disabled={submitting || locked}>
+        <legend className="text-lg font-semibold">{words.account}</legend>
+        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+          {(['existing', 'new'] as const).map(choice => (
+            <label key={choice} className="inline-flex cursor-pointer items-center gap-3 text-sm font-medium">
+              <input type="radio" name="accountChoice" value={choice} checked={accountChoice === choice}
+                onChange={() => { setAccountChoice(choice); setError(null) }}
+                className="h-4 w-4 accent-[var(--brand)]" />
+              {choice === 'existing' ? words.existing : words.newAccount}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      {accountChoice && <>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {accountChoice === 'new' ? words.newHint : words.appHint}
+        </p>
+
+        {divisions.length > 1 && <fieldset disabled={submitting || locked} className="space-y-4 border-t border-border pt-6">
+          <legend className="sr-only">{words.select}</legend>
+          <div className="grid grid-cols-2 gap-4">
+            <label className="grid gap-2 text-sm font-medium">{words.level}
+              <select value={level} onChange={event => { setLevel(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
+                <option value="">{words.all}</option>{levels.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-2 text-sm font-medium">{words.gender}
+              <select value={gender} onChange={event => { setGender(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
+                <option value="">{words.all}</option>{genders.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
+              </select>
+            </label>
+          </div>
+          {filtered.length === 0 ? (
+            <p role="status" className="text-sm text-muted-foreground">{words.noMatch} <button type="button" onClick={() => { setLevel(''); setGender('') }} className="font-medium text-brand underline underline-offset-4">{words.reset}</button></p>
+          ) : (
+            <label className="grid gap-2 text-sm font-medium">{words.select}
+              <select name="division" value={selected?.id ?? ''} onChange={event => { setDivisionId(event.target.value); idempotencyKey.current = null }} className={controlClass}>
+                {filtered.map(division => <option key={division.id} value={division.id}>{division.title}</option>)}
+              </select>
+            </label>
+          )}
+        </fieldset>}
+
+        {selected && <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-5 text-sm" aria-live="polite">
+          <span className="text-muted-foreground">{locale === 'sv' ? 'Anmälningsavgift' : 'Entry fee'}</span>
+          <span className="font-semibold">{formatPrice(selected.price ?? fallbackPrice, currency, dict.common.free)}
+            {selected.capacity != null && <span className="ml-3 font-normal text-muted-foreground">{copy.spotsLeft.replace('{0}', String(Math.max(0, selected.capacity - selected.joined)))}</span>}
+          </span>
         </div>}
-        {filtered.length === 0 && <p role="status">{words.noMatch} <button type="button" onClick={() => { setLevel(''); setGender('') }} className="text-brand underline">{words.reset}</button></p>}
-        <label className="mt-5 grid gap-2 text-sm font-bold">
-          {divisions.length > 1 ? words.select : cupTitle}
-          <select
-            name="division"
-            disabled={filtered.length === 0}
-            value={selected?.id ?? ''}
-            onChange={event => { setDivisionId(event.target.value); idempotencyKey.current = null }}
-            className="h-12 w-full rounded-xl border border-border bg-background px-4 text-sm text-ink"
-          >
-            {filtered.map(division => {
-              const spots = division.capacity == null ? null : division.capacity - division.joined
-              const details = [formatPrice(division.price ?? fallbackPrice, currency, dict.common.free), spots == null ? null : copy.spotsLeft.replace('{0}', String(spots))].filter(Boolean).join(' · ')
-              return <option key={division.id} value={division.id}>{division.title} — {details}</option>
-            })}
-          </select>
-        </label>
-      </fieldset>
 
-      {selected && <fieldset disabled={submitting || locked}>
-        <legend className="text-lg font-black">{words.account}</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <button type="button" aria-pressed={accountChoice === 'existing'} onClick={() => setAccountChoice('existing')} className={`rounded-xl border p-4 text-left font-bold ${accountChoice === 'existing' ? 'border-brand bg-brand-tint' : 'border-border'}`}>{words.existing}</button>
-          <button type="button" aria-pressed={accountChoice === 'new'} onClick={() => setAccountChoice('new')} className={`rounded-xl border p-4 text-left font-bold ${accountChoice === 'new' ? 'border-brand bg-brand-tint' : 'border-border'}`}>{words.newAccount}</button>
-        </div>
-      </fieldset>}
-      {selected && accountChoice === 'existing' && <div>
-        <p className="mb-4 text-muted-foreground">{words.appHint}</p>
-        <a href={registrationUrl(target, selected.id)} className="inline-flex rounded-full bg-ink px-6 py-3 font-bold text-white">{words.openApp}</a>
-      </div>}
-      {selected && accountChoice === 'new' && <>
-      <fieldset disabled={submitting || locked} className="space-y-7">
-      <fieldset>
-        <legend className="text-lg font-black">{copy.personHeading}</legend>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <Field label={copy.labels.firstName} name="firstName" autoComplete="given-name" />
-          <Field label={copy.labels.lastName} name="lastName" autoComplete="family-name" />
-          <Field label={copy.labels.phone} name="phoneNumber" type="tel" autoComplete="tel" />
-          <Field label={copy.labels.birthYear} name="bornYear" type="number" min="1900" max={String(new Date().getFullYear())} required={false} />
-        </div>
-      </fieldset>
+        {selected && accountChoice === 'existing' && (
+          <a href={registrationUrl(target, selected.id)} className={actionClass}>{words.openApp}</a>
+        )}
 
-      <fieldset>
-        <legend className="text-lg font-black">{copy.teamHeading}</legend>
-        <div className="mt-3"><Field label={words.team} name="teamName" autoComplete="organization" /></div>
-      </fieldset>
+        {selected && accountChoice === 'new' && <>
+          <fieldset disabled={submitting || locked} className="space-y-5">
+            <legend className="sr-only">{copy.personHeading}</legend>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field label={copy.labels.firstName} name="firstName" autoComplete="given-name" />
+              <Field label={copy.labels.lastName} name="lastName" autoComplete="family-name" />
+              <Field label={copy.labels.email} name="email" type="email" autoComplete="email" />
+              <Field label={copy.labels.phone} name="phoneNumber" type="tel" autoComplete="tel" />
+              <Field label={copy.labels.password} name="password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} />
+              <Field label={copy.labels.birthYear} name="bornYear" type="number" min="1900" max={String(new Date().getFullYear())} required={false} />
+            </div>
+            <Field label={words.team} name="teamName" autoComplete="organization" />
+            {(!selected.targetAudience || !selected.targetGender) && <div className="grid gap-5 sm:grid-cols-2">
+              {!selected.targetAudience && <label className="grid gap-2 text-sm font-medium">{words.teamType}<select name="teamType" className={controlClass}>{['INDIVIDUAL', 'DUO', 'SQUAD'].map(value => <option key={value} value={value}>{labels[value]}</option>)}</select></label>}
+              {!selected.targetGender && <label className="grid gap-2 text-sm font-medium">{words.gender}<select name="genderType" className={controlClass}>{['MALE', 'FEMALE', 'MIXED'].map(value => <option key={value} value={value}>{labels[value]}</option>)}</select></label>}
+            </div>}
+            <label className="flex cursor-pointer items-start gap-3 pt-2 text-sm leading-relaxed text-muted-foreground">
+              <input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[var(--brand)]" />
+              <span>{copy.termsPrefix} <a href={`https://www.challengenow.se/${locale}/privacy-policy`} target="_blank" rel="noreferrer" className="text-brand underline underline-offset-4">{copy.termsLink}</a>.</span>
+            </label>
+          </fieldset>
 
-      {(!selected.targetAudience || !selected.targetGender) && <div className="grid gap-4 sm:grid-cols-2">
-        {!selected.targetAudience && <label className="grid gap-2 text-sm font-bold">{words.teamType}<select name="teamType" className="h-12 rounded-xl border bg-background px-4">{['INDIVIDUAL', 'DUO', 'SQUAD'].map(value => <option key={value} value={value}>{labels[value]}</option>)}</select></label>}
-        {!selected.targetGender && <label className="grid gap-2 text-sm font-bold">{words.gender}<select name="genderType" className="h-12 rounded-xl border bg-background px-4">{['MALE', 'FEMALE', 'MIXED'].map(value => <option key={value} value={value}>{labels[value]}</option>)}</select></label>}
-      </div>}
-
-      <fieldset>
-        <legend className="text-lg font-black">{copy.accountHeading}</legend>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-sm">
-          <p className="text-muted-foreground">{copy.accountHint}</p>
-          {selected && <a href={registrationUrl(target, selected.id)} className="font-bold text-brand underline underline-offset-4">{copy.existingAccountCta}</a>}
-        </div>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <Field label={copy.labels.email} name="email" type="email" autoComplete="email" />
-          <Field label={copy.labels.password} name="password" type="password" autoComplete="new-password" minLength={MIN_PASSWORD_LENGTH} />
-        </div>
-      </fieldset>
-
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background p-4 text-sm">
-        <input type="checkbox" checked={accepted} onChange={event => setAccepted(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[var(--brand)]" />
-        <span>{copy.termsPrefix} <a href={`https://www.challengenow.se/${locale}/privacy-policy`} target="_blank" rel="noreferrer" className="font-bold text-brand underline underline-offset-2">{copy.termsLink}</a>.</span>
-      </label>
-
-      </fieldset>
-      {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800" role="alert">{error}</div>}
-
-      <button type="submit" disabled={submitting} className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-full bg-ink px-6 text-base font-black text-white transition hover:bg-brand disabled:cursor-wait disabled:opacity-65">
-        {submitting ? <LoaderCircle size={20} className="animate-spin" /> : <CheckCircle2 size={20} />}
-        {submitting ? copy.submitting : copy.submit}
-      </button>
+          {error && <p className="text-sm font-medium text-red-700" role="alert">{error}</p>}
+          <button type="submit" disabled={submitting} className={actionClass}>
+            {submitting && <LoaderCircle size={18} className="animate-spin" />}
+            {submitting ? copy.submitting : copy.submit}
+          </button>
+        </>}
       </>}
     </form>
   )
@@ -254,9 +254,9 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
 
 function Field({ label, name, required = true, ...props }: { label: string; name: string; required?: boolean } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="grid gap-2 text-sm font-bold">
+    <label className="grid gap-2 text-sm font-medium">
       {label}
-      <input name={name} required={required} className="h-12 rounded-xl border border-border bg-background px-4 font-normal text-ink" {...props} />
+      <input name={name} required={required} className={controlClass} {...props} />
     </label>
   )
 }
