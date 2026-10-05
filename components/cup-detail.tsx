@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { CUP_BANNER, CUP_ID } from '@/lib/brand'
-import { ArrowDown, ArrowLeft, CalendarDays, Clock3, Layers3 } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Clock3, Layers3 } from 'lucide-react'
 import type { Cup, Storefront } from '@/lib/types'
 import type { Dictionary, Locale } from '@/lib/i18n'
 import { CupRegistrationForm } from '@/components/cup-registration-form'
@@ -33,9 +33,6 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
               <span className="inline-flex items-center gap-2"><Layers3 size={18} className="text-accent" />{cup.divisions.length} {dict.common.divisions}</span>
               {cup.registrationDeadline && <span className="inline-flex items-center gap-2"><Clock3 size={18} className="text-accent" />{dict.detail.registrationDeadline}: {date(cup.registrationDeadline, locale)}</span>}
             </div>
-            <a href="#registration" className="mt-7 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-ink transition hover:bg-white">
-              {registrationOpen ? dict.common.chooseDivision : dict.detail.chooseDivision}<ArrowDown size={16} />
-            </a>
           </div>
           {cup.id !== CUP_ID && <div className="h-32 overflow-hidden rounded-xl sm:h-40 md:h-44">
             {/* eslint-disable-next-line @next/next/no-img-element */}
