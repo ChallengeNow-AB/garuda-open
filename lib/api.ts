@@ -34,7 +34,7 @@ export async function getStorefrontResult(slug: string): Promise<StorefrontApiRe
     status: 'ok',
     data: {
       ...result.data,
-      organization: { ...result.data.organization, name: STOREFRONT_NAME },
+      organization: result.data.organization,
     },
   }
 }

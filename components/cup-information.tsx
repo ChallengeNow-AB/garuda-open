@@ -37,7 +37,7 @@ export function CupInformation({ cup, activities = [], locale, dict }: {
   if (!cup.description?.trim() && !facts.length) return null
 
   return (
-    <section aria-labelledby="cup-information-heading" className="page-container pt-10 sm:pt-12">
+    <section id="cup-information" aria-labelledby="cup-information-heading" className="page-container scroll-mt-24 pt-10 sm:pt-12">
       <h2 id="cup-information-heading" className="text-2xl font-bold tracking-tight">{labels.title}</h2>
       {cup.description?.trim() && <p className="mt-5 max-w-prose whitespace-pre-line break-words leading-relaxed text-muted-foreground">{cup.description}</p>}
       <dl className="mt-6 grid gap-x-8 gap-y-6 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-3">

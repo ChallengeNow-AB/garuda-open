@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import Image from 'next/image'
+import { CUP_BANNER, CUP_ID } from '@/lib/brand'
 import { ArrowDown, ArrowLeft, CalendarDays, Clock3, Layers3 } from 'lucide-react'
 import type { Cup, Storefront } from '@/lib/types'
 import type { Dictionary, Locale } from '@/lib/i18n'
@@ -15,9 +17,14 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
   return (
     <>
       <section id={landing ? 'competitions' : undefined} className="scroll-mt-24 bg-hero text-white">
-        <div className="page-container grid items-center gap-6 py-10 sm:py-14 md:grid-cols-[1fr_240px]">
+        {cup.id === CUP_ID && <div className="page-container pt-5 sm:pt-8">
+          <Image src={CUP_BANNER} alt="Garuda Open 2026 — Badminton doubles tournament, 6 December 2026, 10:00, Sollentuna Rackethall"
+            width={1672} height={941} sizes="(max-width: 1152px) 100vw, 1088px" priority
+            className="h-auto w-full rounded-xl" />
+        </div>}
+        <div className="page-container grid items-center gap-6 py-8 sm:py-10">
           <div className="min-w-0">
-            {!landing && <Link href={`/${locale}/${slug}#competitions`} className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"><ArrowLeft size={17} />{dict.detail.back}</Link>}
+            {!landing && <Link href={`/${locale}/${slug}#competitions`} className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"><ArrowLeft size={17} />{locale === 'sv' ? 'Till cupsidan' : 'Back to the cup'}</Link>}
             <span className="mt-5 block w-fit rounded-full bg-accent px-4 py-2 text-xs font-black uppercase tracking-widest text-ink">{dict.detail.cup}</span>
             <h1 className="mt-5 max-w-3xl text-3xl font-black leading-tight tracking-[-.04em] sm:text-4xl">{cup.title}</h1>
             {storefront?.branding.tagline && <p className="mt-4 max-w-2xl whitespace-pre-line text-base leading-relaxed text-white/75">{storefront.branding.tagline}</p>}
@@ -30,10 +37,10 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
               {registrationOpen ? dict.common.chooseDivision : dict.detail.chooseDivision}<ArrowDown size={16} />
             </a>
           </div>
-          <div className="h-32 overflow-hidden rounded-xl sm:h-40 md:h-44">
+          {cup.id !== CUP_ID && <div className="h-32 overflow-hidden rounded-xl sm:h-40 md:h-44">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={cup.imageUrl || storefront?.branding.coverImageUrl || '/badminton.jpg'} alt="" className="h-full w-full object-cover" />
-          </div>
+          </div>}
         </div>
       </section>
       <CupInformation cup={cup} activities={storefront?.tournaments} locale={locale} dict={dict} />
