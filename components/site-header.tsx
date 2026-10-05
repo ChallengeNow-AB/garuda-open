@@ -5,7 +5,6 @@ import { useState } from 'react'
 import { ArrowUpRight, Menu, X } from 'lucide-react'
 import type { Dictionary, Locale } from '@/lib/i18n'
 import type { Storefront } from '@/lib/types'
-import { playerRegistrationUrl } from '@/lib/registration'
 import { LanguageSwitcher } from './language-switcher'
 import { STOREFRONT_SLUG } from '@/lib/brand'
 
@@ -31,7 +30,7 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-[76px] max-w-[1500px] items-center justify-between gap-4 px-5 sm:px-10 lg:px-16 xl:px-24">
+      <div className="page-container flex h-[76px] items-center justify-between gap-4">
         <Link href={home} className="flex min-w-0 items-center gap-3" onClick={() => setOpen(false)}>
           {organization?.logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -47,17 +46,17 @@ export function SiteHeader({
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher locale={locale} />
-          <a href={playerRegistrationUrl()} className="hidden items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand sm:inline-flex">{dict.nav.createAccount}<ArrowUpRight size={16} /></a>
+          <Link href={`${home}#competitions`} className="hidden items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-sm font-bold text-white transition hover:bg-brand sm:inline-flex">{dict.detail.register}<ArrowUpRight size={16} /></Link>
           <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border text-ink lg:hidden" aria-label={open ? dict.nav.closeMenu : dict.nav.openMenu} aria-expanded={open} onClick={() => setOpen(value => !value)}>
             {open ? <X size={21} /> : <Menu size={21} />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="border-t border-border bg-white px-5 py-4 lg:hidden" aria-label={dict.nav.mainMenu}>
-          <div className="mx-auto grid max-w-7xl gap-1">
+        <nav className="border-t border-border bg-white py-4 lg:hidden" aria-label={dict.nav.mainMenu}>
+          <div className="page-container grid gap-1">
             {links.map(link => <Link key={link.href} href={`${home}${link.href}`} onClick={() => setOpen(false)} className="rounded-xl px-4 py-3 text-base font-bold text-ink transition hover:bg-brand-tint hover:text-brand">{link.label}</Link>)}
-            <a href={playerRegistrationUrl()} className="mt-2 rounded-xl bg-ink px-4 py-3 text-center text-sm font-bold text-white sm:hidden">{dict.nav.createAccount}</a>
+            <Link href={`${home}#competitions`} onClick={() => setOpen(false)} className="mt-2 rounded-xl bg-ink px-4 py-3 text-center text-sm font-bold text-white sm:hidden">{dict.detail.register}</Link>
           </div>
         </nav>
       )}

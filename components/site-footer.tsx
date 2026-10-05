@@ -6,7 +6,7 @@ import { STOREFRONT_NAME, STOREFRONT_SLUG } from '@/lib/brand'
 export function SiteFooter({ locale, dict, organization }: { locale: Locale; dict: Dictionary; organization?: Storefront['organization'] }) {
   return (
     <footer className="bg-ink text-white">
-      <div className="mx-auto grid max-w-[1500px] gap-10 px-5 py-12 sm:px-10 lg:grid-cols-[1fr_auto] lg:px-16 xl:px-24">
+      <div className="page-container grid gap-10 py-12 lg:grid-cols-[1fr_auto]">
         <div>
           <Link href={`/${locale}/${STOREFRONT_SLUG}`} className="inline-flex flex-col leading-none">
             <span className="text-2xl font-black uppercase tracking-[-.06em]">KOMU<span className="text-accent">NITAS</span></span>

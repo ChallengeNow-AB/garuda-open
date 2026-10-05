@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowUpRight, CalendarDays, MapPin, RefreshCcw, Trophy, UsersRound } from 'lucide-react'
-import { getCupDetailResult, getStorefrontDetailResult, type DetailKind } from '@/lib/api'
+import { getCupDetailResult, getStorefront, getStorefrontDetailResult, type DetailKind } from '@/lib/api'
 import { getDictionary, isLocale, type Locale } from '@/lib/i18n'
 import { formatPrice, formatWhen } from '@/lib/format'
 import type { RegistrationTarget } from '@/lib/registration'
@@ -41,7 +41,8 @@ export default async function DetailPage({ params }: Props) {
     const result = await getCupDetailResult(slug, numericId)
     if (result.status === 'not-found') notFound()
     if (result.status === 'error') return <ServerTimeout locale={locale} slug={slug} kind={kind} id={id} />
-    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} />
+    const storefront = await getStorefront(slug)
+    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} storefront={storefront ?? undefined} />
   }
 
   const result = await getStorefrontDetailResult(slug, kind, numericId)

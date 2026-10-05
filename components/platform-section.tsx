@@ -9,7 +9,7 @@ export function PlatformSection({ dict }: { dict: Dictionary }) {
   ]
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20">
+    <section className="page-container py-10 sm:py-12">
       <div className="overflow-hidden rounded-[2rem] border border-brand/15 bg-white shadow-card">
         <div className="grid gap-8 border-b border-border bg-brand-tint px-6 py-9 sm:px-10 lg:grid-cols-[1fr_.8fr] lg:items-end lg:px-12">
           <div>

@@ -1,38 +1,43 @@
 import Link from 'next/link'
-import { ArrowLeft, CalendarDays, Clock3, Layers3 } from 'lucide-react'
-import type { Cup } from '@/lib/types'
+import { ArrowDown, ArrowLeft, CalendarDays, Clock3, Layers3 } from 'lucide-react'
+import type { Cup, Storefront } from '@/lib/types'
 import type { Dictionary, Locale } from '@/lib/i18n'
 import { CupRegistrationForm } from '@/components/cup-registration-form'
+import { CupInformation } from '@/components/cup-information'
 
 function date(value: string, locale: Locale): string {
   return new Intl.DateTimeFormat(locale === 'sv' ? 'sv-SE' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value))
 }
 
-export function CupDetail({ cup, locale, slug, dict }: { cup: Cup; locale: Locale; slug: string; dict: Dictionary }) {
+export function CupDetail({ cup, locale, slug, dict, landing = false, storefront }: { cup: Cup; locale: Locale; slug: string; dict: Dictionary; landing?: boolean; storefront?: Storefront }) {
   const today = new Date().setHours(0, 0, 0, 0)
   const registrationOpen = (!cup.registrationDeadline || new Date(cup.registrationDeadline).getTime() >= today) && new Date(cup.endDate || cup.startDate).getTime() >= today
   return (
     <>
-      <section className="bg-hero text-white">
-        <div className="mx-auto grid max-w-5xl items-center gap-6 px-5 py-8 sm:px-8 sm:py-10 md:grid-cols-[1fr_240px]">
+      <section id={landing ? 'competitions' : undefined} className="scroll-mt-24 bg-hero text-white">
+        <div className="page-container grid items-center gap-6 py-10 sm:py-14 md:grid-cols-[1fr_240px]">
           <div className="min-w-0">
-            <Link href={`/${locale}/${slug}#competitions`} className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"><ArrowLeft size={17} />{dict.detail.back}</Link>
+            {!landing && <Link href={`/${locale}/${slug}#competitions`} className="inline-flex items-center gap-2 text-sm font-bold text-white/70 transition hover:text-white"><ArrowLeft size={17} />{dict.detail.back}</Link>}
             <span className="mt-5 block w-fit rounded-full bg-accent px-4 py-2 text-xs font-black uppercase tracking-widest text-ink">{dict.detail.cup}</span>
             <h1 className="mt-5 max-w-3xl text-3xl font-black leading-tight tracking-[-.04em] sm:text-4xl">{cup.title}</h1>
-            {cup.description && <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/75">{cup.description}</p>}
+            {storefront?.branding.tagline && <p className="mt-4 max-w-2xl whitespace-pre-line text-base leading-relaxed text-white/75">{storefront.branding.tagline}</p>}
             <div className="mt-8 flex flex-wrap gap-x-7 gap-y-4 text-sm font-bold text-white/80">
               <span className="inline-flex items-center gap-2"><CalendarDays size={18} className="text-accent" />{date(cup.startDate, locale)}{cup.endDate && cup.endDate !== cup.startDate ? ` – ${date(cup.endDate, locale)}` : ''}</span>
               <span className="inline-flex items-center gap-2"><Layers3 size={18} className="text-accent" />{cup.divisions.length} {dict.common.divisions}</span>
               {cup.registrationDeadline && <span className="inline-flex items-center gap-2"><Clock3 size={18} className="text-accent" />{dict.detail.registrationDeadline}: {date(cup.registrationDeadline, locale)}</span>}
             </div>
+            <a href="#registration" className="mt-7 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-ink transition hover:bg-white">
+              {registrationOpen ? dict.common.chooseDivision : dict.detail.chooseDivision}<ArrowDown size={16} />
+            </a>
           </div>
           <div className="h-32 overflow-hidden rounded-xl sm:h-40 md:h-44">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cup.imageUrl || '/badminton.jpg'} alt="" className="h-full w-full object-cover" />
+            <img src={cup.imageUrl || storefront?.branding.coverImageUrl || '/badminton.jpg'} alt="" className="h-full w-full object-cover" />
           </div>
         </div>
       </section>
-      <section id="registration" aria-labelledby="registration-heading" className="mx-auto max-w-3xl scroll-mt-24 px-5 py-10 sm:py-12">
+      <CupInformation cup={cup} activities={storefront?.tournaments} locale={locale} dict={dict} />
+      <section id="registration" aria-labelledby="registration-heading" className="page-container scroll-mt-24 py-10 sm:py-12">
         <div className="rounded-2xl border border-border bg-white p-5 shadow-card sm:p-8">
           <h2 id="registration-heading" className="mb-6 text-2xl font-bold text-ink">{dict.detail.register}</h2>
           <CupRegistrationForm cupTitle={cup.title} currency={cup.currency} fallbackPrice={cup.price} divisions={cup.divisions} registrationOpen={registrationOpen} locale={locale} dict={dict} />
