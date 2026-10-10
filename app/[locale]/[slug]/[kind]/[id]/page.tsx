@@ -6,12 +6,12 @@ import { getCupDetailResult, getCupMatchFeed, getStorefront, getStorefrontDetail
 import { getDictionary, isLocale, type Locale } from '@/lib/i18n'
 import { formatPrice, formatWhen } from '@/lib/format'
 import type { RegistrationTarget } from '@/lib/registration'
-import type { MatchSummary, StandingSummary, StorefrontDetail, TeamSummary } from '@/lib/types'
+import type { MatchSummary, PaymentMethod, StandingSummary, StorefrontDetail, TeamSummary } from '@/lib/types'
 import { CupRegistrationForm } from '@/components/cup-registration-form'
-import { CupDetail } from '@/components/cup-detail'
+import { CupDetail, parseCupView } from '@/components/cup-detail'
 import { PlatformSection } from '@/components/platform-section'
 
-type Props = { params: Promise<{ locale: string; slug: string; kind: string; id: string }>; searchParams: Promise<{ view?: string }> }
+type Props = { params: Promise<{ locale: string; slug: string; kind: string; id: string }>; searchParams: Promise<{ view?: string; division?: string }> }
 type RouteKind = DetailKind | 'cup'
 
 function isRouteKind(value: string): value is RouteKind {
@@ -42,19 +42,20 @@ export default async function DetailPage({ params, searchParams }: Props) {
     if (result.status === 'not-found') notFound()
     if (result.status === 'error') return <ServerTimeout locale={locale} slug={slug} kind={kind} id={id} />
     const storefront = await getStorefront(slug)
-    const requestedView = (await searchParams).view
-    const view = requestedView === 'matches' || requestedView === 'results' ? requestedView : 'overview'
+    const query = await searchParams
+    const view = parseCupView(query.view)
     const feed = view === 'overview' ? undefined : await getCupMatchFeed(slug, result.data)
-    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} storefront={storefront ?? undefined} view={view} feed={feed} />
+    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} storefront={storefront ?? undefined} view={view} feed={feed}
+      divisionId={Number(query.division) || undefined} />
   }
 
-  const result = await getStorefrontDetailResult(slug, kind, numericId)
+  const [result, storefront] = await Promise.all([getStorefrontDetailResult(slug, kind, numericId), getStorefront(slug)])
   if (result.status === 'not-found') notFound()
   if (result.status === 'error') return <ServerTimeout locale={locale} slug={slug} kind={kind} id={id} />
-  return <ActivityDetail detail={result.data} kind={kind} id={numericId} locale={locale} slug={slug} />
+  return <ActivityDetail detail={result.data} kind={kind} id={numericId} locale={locale} slug={slug} paymentMethods={storefront?.paymentMethods} />
 }
 
-function ActivityDetail({ detail, kind, id, locale, slug }: { detail: StorefrontDetail; kind: DetailKind; id: number; locale: Locale; slug: string }) {
+function ActivityDetail({ detail, kind, id, locale, slug, paymentMethods }: { detail: StorefrontDetail; kind: DetailKind; id: number; locale: Locale; slug: string; paymentMethods?: PaymentMethod[] }) {
   const dict = getDictionary(locale)
   const league = detail.league
   const activity = detail.activity
@@ -103,7 +104,7 @@ function ActivityDetail({ detail, kind, id, locale, slug }: { detail: Storefront
         <div className="rounded-2xl border border-border bg-white p-5 shadow-card sm:p-8">
         <h2 className="mb-6 text-2xl font-bold">{dict.detail.register}</h2>
         <CupRegistrationForm cupTitle={title} currency={league?.currency ?? activity?.currency} fallbackPrice={league?.fee ?? activity?.price}
-          target={target} locale={locale} dict={dict} divisions={[{
+          target={target} locale={locale} dict={dict} paymentMethods={paymentMethods} divisions={[{
             id, title, joined: activity?.joined ?? detail.participants.length, registrationClosed: closed,
             targetAudience: league?.targetAudience ?? activity?.targetAudience,
             targetGender: league?.targetGender ?? activity?.targetGender,

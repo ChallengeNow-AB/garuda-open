@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       cache: 'no-store',
     })
     const body = await response.json().catch(() => null)
-    return NextResponse.json(response.ok ? { user: body?.user, registration: body?.registration } : { code: body?.code, message: 'Registration failed' }, { status: response.status })
+    return NextResponse.json(response.ok ? { user: body?.user, registration: body?.registration, receipt: body?.receipt ?? null } : { code: body?.code, message: 'Registration failed' }, { status: response.status })
   } catch {
     return NextResponse.json({ message: 'Registration service unavailable' }, { status: 503 })
   }

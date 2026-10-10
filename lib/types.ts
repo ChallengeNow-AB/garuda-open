@@ -105,6 +105,34 @@ export interface Storefront {
   tournaments: Activity[]
   cups?: Cup[]
   events: Activity[]
+  /** How the organizer takes payment (Swish, bankgiro …). Absent on older API versions. */
+  paymentMethods?: PaymentMethod[]
+}
+
+export interface PaymentMethod {
+  providerName: string
+  paymentReference: string
+}
+
+/** Mirrors the API's RegistrationReceiptVO, returned right after a registration. */
+export interface RegistrationReceipt {
+  kind: 'EVENT' | 'TOURNAMENT' | 'LEAGUE'
+  activityId: number
+  activityTitle: string
+  cupTitle?: string | null
+  teamName: string
+  payment: {
+    status: 'FREE' | 'UNPAID' | 'PAID' | 'PENDING'
+    amount: number
+    vatAmount: number
+    currency?: string | null
+    invoiceNumber?: string | null
+    ocr?: string | null
+    /** ISO date-time. */
+    dueDate?: string | null
+    sellerName?: string | null
+    methods: PaymentMethod[]
+  }
 }
 
 export interface TeamSummary {
@@ -143,11 +171,32 @@ export interface MatchSummary {
   verifiedResult: boolean
   round: number
   bracketSlot: number
+  /** MatchResult.MatchDecision, e.g. HOME_TEAM_WON or AWAY_TEAM_NO_SHOW. */
+  decision?: string | null
 }
 
-export interface CupMatch extends MatchSummary {
-  divisionId: number
-  divisionTitle: string
+/** One group of a tournament's group stage: a real league with its table and fixtures. */
+export interface GroupSummary {
+  id: number
+  name?: string
+  advanceCount: number
+  standings: StandingSummary[]
+  matches: MatchSummary[]
+}
+
+export interface BracketSummary {
+  totalRounds: number
+  status?: string
+}
+
+/** Everything the matches/results/bracket views need for one cup division. */
+export interface DivisionFeed {
+  division: CupDivision
+  /** Knockout fixtures (round ≥ 1, bracketSlot within the round). */
+  knockout: MatchSummary[]
+  groups: GroupSummary[]
+  bracket?: BracketSummary | null
+  unavailable: boolean
 }
 
 export interface StorefrontDetail {
@@ -158,4 +207,7 @@ export interface StorefrontDetail {
   participants: TeamSummary[]
   standings: StandingSummary[]
   matches: MatchSummary[]
+  /** Tournament group stage (absent on older API versions). */
+  groups?: GroupSummary[]
+  bracket?: BracketSummary | null
 }

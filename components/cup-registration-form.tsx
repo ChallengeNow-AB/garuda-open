@@ -6,9 +6,12 @@ import { createAccountForRegistration, firebaseErrorCode, MIN_PASSWORD_LENGTH } 
 import { formatPrice } from '@/lib/format'
 import { registrationUrl } from '@/lib/registration'
 import type { Dictionary, Locale } from '@/lib/i18n'
-import type { CupDivision } from '@/lib/types'
+import type { CupDivision, PaymentMethod, RegistrationReceipt } from '@/lib/types'
+import { PaymentMethodList, ReceiptPayment } from '@/components/payment-details'
 
 type Props = {
+  /** The organizer's payment channels, shown beside the fee and on the receipt as a fallback. */
+  paymentMethods?: PaymentMethod[]
   cupTitle: string
   currency?: string
   fallbackPrice?: number
@@ -25,7 +28,7 @@ const controlClass = 'h-12 w-full min-w-0 rounded-lg border border-border bg-whi
 const actionClass = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-base font-bold text-white transition hover:bg-brand disabled:cursor-wait disabled:opacity-60'
 const choiceClass = 'flex min-h-13 cursor-pointer items-center justify-between gap-2 rounded-lg border border-border bg-white px-3 py-3 text-left transition hover:border-brand hover:bg-brand-tint/40 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand has-[:checked]:border-brand has-[:checked]:bg-brand sm:px-4'
 
-type RegistrationResult = { registration?: { team?: { name?: string } } }
+type RegistrationResult = { registration?: { team?: { name?: string } }; receipt?: RegistrationReceipt | null }
 const TEAM_TYPES = new Set(['INDIVIDUAL', 'SQUAD', 'DUO'])
 const GENDER_TYPES = new Set(['MALE', 'FEMALE', 'MIXED'])
 
@@ -41,7 +44,7 @@ function shuttleType(title: string): string {
   return title.match(/\b(nylon|feather)\b/i)?.[1].toLowerCase() ?? ''
 }
 
-export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisions, registrationOpen = true, target = 'tournament', guidedDoubles = false, locale, dict }: Props) {
+export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisions, registrationOpen = true, target = 'tournament', guidedDoubles = false, locale, dict, paymentMethods = [] }: Props) {
   const copy = dict.detail.registration
   const words = locale === 'sv' ? {
     level: 'Nivå', gender: 'Kön', all: 'Alla', noMatch: 'Inga klasser matchar dina filter.', reset: 'Visa alla',
@@ -185,7 +188,16 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
         <h3 className="mt-4 text-2xl font-black">{words.done}</h3>
         <p className="mt-2 leading-relaxed">{copy.successBody.replace('{team}', result.registration?.team?.name ?? '').replace('{division}', selected?.title ?? cupTitle)}</p>
         <p className="mt-3 text-sm text-muted-foreground">{words.appInfo}</p>
-        {selected && <a href={registrationUrl(target, selected.id)} className="mt-5 inline-flex rounded-full bg-ink px-6 py-3 font-bold text-white">{words.openApp}</a>}
+        {result.receipt
+          ? <ReceiptPayment receipt={result.receipt} fallbackMethods={paymentMethods} locale={locale} freeLabel={dict.common.free} />
+          : paymentMethods.length > 0 && (selected?.price ?? fallbackPrice ?? 0) > 0 && <div className="rounded-2xl border border-border bg-[#f6faf8] p-5 sm:p-6">
+            <h4 className="text-lg font-black">{locale === 'sv' ? 'Betalning' : 'Payment'}</h4>
+            <p className="mt-1 text-sm text-muted-foreground">{locale === 'sv'
+              ? `Anmälningsavgiften är ${formatPrice(selected?.price ?? fallbackPrice, currency, dict.common.free)}. Fullständiga betalningsuppgifter kommer i bekräftelsemejlet.`
+              : `The entry fee is ${formatPrice(selected?.price ?? fallbackPrice, currency, dict.common.free)}. Full payment details are in your confirmation email.`}</p>
+            <PaymentMethodList methods={paymentMethods} className="mt-4 sm:grid-cols-2" />
+          </div>}
+        {selected && <a href={registrationUrl(target, selected.id)} className="mt-5 inline-flex rounded-full bg-ink px-6 py-3 font-bold text-white transition hover:bg-brand">{words.openApp}</a>}
       </div>
     )
   }
@@ -255,6 +267,11 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
           </div>
           <div className="mt-5 border-t border-border pt-4"><span className="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{locale === 'sv' ? 'Anmälningsavgift' : 'Entry fee'}</span><strong className="mt-1 block text-xl text-ink">{formatPrice(selected.price ?? fallbackPrice, currency, dict.common.free)}</strong></div>
         </div> : <p className="mt-6 text-sm leading-relaxed text-muted-foreground" role="status">{gender && level && shuttle ? words.noMatch : words.chooseFilters}</p>}
+        {paymentMethods.length > 0 && <div className="mt-5 border-t border-border pt-4">
+          <span className="block text-xs font-bold uppercase tracking-wide text-muted-foreground">{locale === 'sv' ? 'Så betalar du' : 'How to pay'}</span>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{locale === 'sv' ? 'Du får belopp och referens efter anmälan.' : 'You get the amount and reference after registering.'}</p>
+          <PaymentMethodList methods={paymentMethods} className="mt-3" />
+        </div>}
         </aside>
         </div>
 
@@ -365,6 +382,7 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
             {selected.capacity != null && <span className="ml-3 font-normal text-muted-foreground">{copy.spotsLeft.replace('{0}', String(Math.max(0, selected.capacity - selected.joined)))}</span>}
           </span>
         </div>}
+        {selected && (selected.price ?? fallbackPrice ?? 0) > 0 && <PaymentMethodList methods={paymentMethods} className="sm:grid-cols-2" />}
 
         {selected && accountChoice === 'existing' && (
           <a href={registrationUrl(target, selected.id)} className={actionClass}>{words.openApp}</a>

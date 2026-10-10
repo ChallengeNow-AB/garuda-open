@@ -32,7 +32,14 @@
   --shadow-card-hover: 0 22px 50px rgba(12, 46, 53, .16);
 }
 
-* { box-sizing: border-box; border-color: var(--border); }
+/* In the base layer so utilities like border-transparent / border-brand can still override it —
+   unlayered, this beat every border colour utility on the site. */
+@layer base {
+  * { box-sizing: border-box; border-color: var(--border); }
+  /* Tailwind v4 resets buttons to the default arrow; anything clickable gets the hand. */
+  a[href], button:not(:disabled), [role='button'], [role='option'], summary, select, label:has(input[type='radio'], input[type='checkbox']), input[type='checkbox'], input[type='radio'] { cursor: pointer; }
+  button:disabled, input:disabled, select:disabled { cursor: not-allowed; }
+}
 html { scroll-behavior: smooth; }
 body {
   margin: 0;

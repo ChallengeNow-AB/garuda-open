@@ -48,7 +48,8 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   return NextResponse.json(
-    { user: body?.user, registration: body?.registration },
+    // The receipt carries the payment details (amount, OCR, due date, Swish/bankgiro) to show right away.
+    { user: body?.user, registration: body?.registration, receipt: body?.receipt ?? null },
     { status: apiResponse.status },
   )
 }

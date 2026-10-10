@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getDictionary, isLocale } from '@/lib/i18n'
 import { getCupDetailResult, getCupMatchFeed, getStorefrontResult } from '@/lib/api'
 import { CUP_BANNER, CUP_ID, CUP_NAME, STOREFRONT_SLUG } from '@/lib/brand'
-import { CupDetail } from '@/components/cup-detail'
+import { CupDetail, parseCupView } from '@/components/cup-detail'
 import { cache } from 'react'
 
 // This site belongs to Garuda Open 2026, not whichever cup is next.
@@ -15,7 +15,7 @@ const getCupPageData = cache(async () => {
   return { storefront, cup }
 })
 
-type Props = { params: Promise<{ locale: string; slug: string }>; searchParams: Promise<{ view?: string }> }
+type Props = { params: Promise<{ locale: string; slug: string }>; searchParams: Promise<{ view?: string; division?: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params
@@ -38,8 +38,9 @@ export default async function StorefrontPage({ params, searchParams }: Props) {
   if (!isLocale(locale) || slug !== STOREFRONT_SLUG) notFound()
   const dict = getDictionary(locale)
   const { cup, storefront } = await getCupPageData()
-  const requestedView = (await searchParams).view
-  const view = requestedView === 'matches' || requestedView === 'results' ? requestedView : 'overview'
+  const query = await searchParams
+  const view = parseCupView(query.view)
+  const divisionId = Number(query.division) || undefined
   if (cup.status !== 'ok') return (
     <section className="page-container py-16">
       <h1 className="text-4xl font-black">{CUP_NAME}</h1>
@@ -50,5 +51,5 @@ export default async function StorefrontPage({ params, searchParams }: Props) {
   )
   const feed = view === 'overview' ? undefined : await getCupMatchFeed(slug, cup.data)
   return <CupDetail cup={cup.data} locale={locale} slug={slug} dict={dict}
-    storefront={storefront.status === 'ok' ? storefront.data : undefined} landing view={view} feed={feed} />
+    storefront={storefront.status === 'ok' ? storefront.data : undefined} landing view={view} feed={feed} divisionId={divisionId} />
 }

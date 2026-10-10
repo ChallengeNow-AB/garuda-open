@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowRight, CalendarDays, MapPin, Layers3 } from 'lucide-react'
-import type { Cup, CupMatch, Storefront } from '@/lib/types'
+import type { Cup, Storefront } from '@/lib/types'
+import type { CupFeed } from '@/lib/api'
 import type { Dictionary, Locale } from '@/lib/i18n'
 import { formatPrice } from '@/lib/format'
 import { CUP_ID, STOREFRONT_NAME } from '@/lib/brand'
@@ -9,13 +10,17 @@ import { CupRegistrationForm } from '@/components/cup-registration-form'
 import { CupInformation } from '@/components/cup-information'
 import { CupMatchView } from '@/components/cup-match-view'
 
-export type CupView = 'overview' | 'matches' | 'results'
+export type CupView = 'overview' | 'matches' | 'results' | 'bracket'
+
+export function parseCupView(value?: string): CupView {
+  return value === 'matches' || value === 'results' || value === 'bracket' ? value : 'overview'
+}
 
 function date(value: string, locale: Locale): string {
   return new Intl.DateTimeFormat(locale === 'sv' ? 'sv-SE' : 'en-GB', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${value}T12:00:00Z`))
 }
 
-export function CupDetail({ cup, locale, slug, dict, landing = false, storefront, view = 'overview', feed }: {
+export function CupDetail({ cup, locale, slug, dict, landing = false, storefront, view = 'overview', feed, divisionId }: {
   cup: Cup
   locale: Locale
   slug: string
@@ -23,7 +28,8 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
   landing?: boolean
   storefront?: Storefront
   view?: CupView
-  feed?: { matches: CupMatch[]; unavailable: boolean }
+  feed?: CupFeed
+  divisionId?: number
 }) {
   const today = new Intl.DateTimeFormat('sv-SE', {
     timeZone: 'Europe/Stockholm', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -76,7 +82,8 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
           </div>
           <div className="mt-9">
             <CupRegistrationForm cupTitle={cup.title} currency={cup.currency} fallbackPrice={cup.price}
-              divisions={cup.divisions} registrationOpen={registrationOpen} locale={locale} dict={dict} guidedDoubles={isGaruda} />
+              divisions={cup.divisions} registrationOpen={registrationOpen} locale={locale} dict={dict} guidedDoubles={isGaruda}
+              paymentMethods={storefront?.paymentMethods} />
           </div>
         </div>
       </section>
@@ -90,6 +97,6 @@ export function CupDetail({ cup, locale, slug, dict, landing = false, storefront
           <div className="relative h-44 overflow-hidden rounded-2xl sm:h-52"><Image src="/shuttlecock-court.png" alt="" fill sizes="(max-width: 768px) 100vw, 600px" className="object-cover" /></div>
         </div>
       </section>
-    </> : <CupMatchView cup={cup} locale={locale} view={view} feed={feed} cupPath={cupPath} />}
+    </> : <CupMatchView cup={cup} locale={locale} view={view} feed={feed} cupPath={cupPath} divisionId={divisionId} />}
   </>
 }

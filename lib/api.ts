@@ -1,4 +1,4 @@
-import type { Club, Cup, CupMatch, Storefront, StorefrontDetail } from './types'
+import type { Club, Cup, DivisionFeed, Storefront, StorefrontDetail } from './types'
 import { STOREFRONT_NAME, STOREFRONT_SLUG } from './brand'
 
 const API_URL = (process.env.CN_API_URL ?? 'https://apiv2.challengenow.se').replace(/\/$/, '')
@@ -63,18 +63,22 @@ export function getCupDetailResult(slug: string, id: number): Promise<Storefront
   return cnGetResult<Cup>(`/api/storefronts/${encodeURIComponent(slug)}/cups/${id}`)
 }
 
-/** A cup is a collection of tournament divisions. Match data lives on each division. */
-export async function getCupMatchFeed(slug: string, cup: Cup): Promise<{ matches: CupMatch[]; unavailable: boolean }> {
-  const details = await Promise.all(cup.divisions.map(async division => ({
-    division,
-    result: await getStorefrontDetailResult(slug, 'tournament', division.id),
-  })))
-  return {
-    matches: details.flatMap(({ division, result }) => result.status === 'ok'
-      ? result.data.matches.map(match => ({ ...match, divisionId: division.id, divisionTitle: division.title }))
-      : []),
-    unavailable: details.some(({ result }) => result.status === 'error'),
-  }
+export type CupFeed = { divisions: DivisionFeed[]; unavailable: boolean }
+
+/** A cup is a collection of tournament divisions. Groups, knockout and bracket live on each division. */
+export async function getCupMatchFeed(slug: string, cup: Cup): Promise<CupFeed> {
+  const divisions = await Promise.all(cup.divisions.map(async (division): Promise<DivisionFeed> => {
+    const result = await getStorefrontDetailResult(slug, 'tournament', division.id)
+    if (result.status !== 'ok') return { division, knockout: [], groups: [], bracket: null, unavailable: result.status === 'error' }
+    return {
+      division,
+      knockout: result.data.matches,
+      groups: result.data.groups ?? [],
+      bracket: result.data.bracket ?? null,
+      unavailable: false,
+    }
+  }))
+  return { divisions, unavailable: divisions.some(feed => feed.unavailable) }
 }
 
 export async function getClubs(): Promise<Club[]> {
