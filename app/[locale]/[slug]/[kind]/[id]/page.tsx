@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ArrowUpRight, CalendarDays, MapPin, RefreshCcw, Trophy, UsersRound } from 'lucide-react'
-import { getCupDetailResult, getStorefront, getStorefrontDetailResult, type DetailKind } from '@/lib/api'
+import { getCupDetailResult, getCupMatchFeed, getStorefront, getStorefrontDetailResult, type DetailKind } from '@/lib/api'
 import { getDictionary, isLocale, type Locale } from '@/lib/i18n'
 import { formatPrice, formatWhen } from '@/lib/format'
 import type { RegistrationTarget } from '@/lib/registration'
@@ -11,7 +11,7 @@ import { CupRegistrationForm } from '@/components/cup-registration-form'
 import { CupDetail } from '@/components/cup-detail'
 import { PlatformSection } from '@/components/platform-section'
 
-type Props = { params: Promise<{ locale: string; slug: string; kind: string; id: string }> }
+type Props = { params: Promise<{ locale: string; slug: string; kind: string; id: string }>; searchParams: Promise<{ view?: string }> }
 type RouteKind = DetailKind | 'cup'
 
 function isRouteKind(value: string): value is RouteKind {
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: title || 'Not found' }
 }
 
-export default async function DetailPage({ params }: Props) {
+export default async function DetailPage({ params, searchParams }: Props) {
   const { locale, slug, kind, id } = await params
   const numericId = Number(id)
   if (!isLocale(locale) || slug !== 'satuminton' || !isRouteKind(kind) || !Number.isSafeInteger(numericId) || numericId <= 0) notFound()
@@ -42,7 +42,10 @@ export default async function DetailPage({ params }: Props) {
     if (result.status === 'not-found') notFound()
     if (result.status === 'error') return <ServerTimeout locale={locale} slug={slug} kind={kind} id={id} />
     const storefront = await getStorefront(slug)
-    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} storefront={storefront ?? undefined} />
+    const requestedView = (await searchParams).view
+    const view = requestedView === 'matches' || requestedView === 'results' ? requestedView : 'overview'
+    const feed = view === 'overview' ? undefined : await getCupMatchFeed(slug, result.data)
+    return <CupDetail cup={result.data} locale={locale} slug={slug} dict={dict} storefront={storefront ?? undefined} view={view} feed={feed} />
   }
 
   const result = await getStorefrontDetailResult(slug, kind, numericId)

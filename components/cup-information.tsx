@@ -1,52 +1,50 @@
+import { Layers3, UsersRound, BarChart3, Feather } from 'lucide-react'
 import type { Activity, Cup } from '@/lib/types'
 import type { Dictionary, Locale } from '@/lib/i18n'
-import { formatPrice, formatWhen } from '@/lib/format'
+import { CUP_ID } from '@/lib/brand'
 
-export function CupInformation({ cup, activities = [], locale, dict }: {
+const genderNames: Record<string, { en: string; sv: string }> = {
+  MALE: { en: 'Men', sv: 'Herrar' },
+  FEMALE: { en: 'Women', sv: 'Damer' },
+  MIXED: { en: 'Mixed', sv: 'Mixed' },
+  OPEN: { en: 'Open', sv: 'Öppen' },
+}
+const levelNames: Record<string, { en: string; sv: string }> = {
+  BEGINNER: { en: 'Beginner', sv: 'Nybörjare' },
+  INTERMEDIATE: { en: 'Intermediate', sv: 'Medel' },
+  ADVANCED: { en: 'Advanced', sv: 'Avancerad' },
+  ELITE: { en: 'Advanced', sv: 'Avancerad' },
+  PRO: { en: 'Advanced', sv: 'Avancerad' },
+}
+
+export function CupInformation({ cup, locale }: {
   cup: Cup; activities?: Activity[]; locale: Locale; dict: Dictionary
 }) {
-  const labels = locale === 'sv' ? {
-    title: 'Om cupen', sport: 'Sport', fee: 'Anmälningsavgift', categories: 'Kategorier',
-    levels: 'Nivåer', starts: 'Starttider för klasserna', venues: 'Spelplatser',
-    feeNote: 'Avgiften beror på vilken klass du väljer.',
-    genders: { MALE: 'Herr', FEMALE: 'Dam', MIXED: 'Mixed', OPEN: 'Öppen' },
-    skills: { BEGINNER: 'Nybörjare', INTERMEDIATE: 'Medel', ADVANCED: 'Avancerad', ELITE: 'Elit', ALL: 'Alla nivåer' },
-  } : {
-    title: 'About the cup', sport: 'Sport', fee: 'Entry fee', categories: 'Categories',
-    levels: 'Levels', starts: 'Division start times', venues: 'Venues',
-    feeNote: 'The fee depends on your selected division.',
-    genders: { MALE: 'Men', FEMALE: 'Women', MIXED: 'Mixed', OPEN: 'Open' },
-    skills: { BEGINNER: 'Beginner', INTERMEDIATE: 'Intermediate', ADVANCED: 'Advanced', ELITE: 'Elite', ALL: 'All levels' },
-  }
-  const unique = (values: (string | undefined)[]) => [...new Set(values.filter((value): value is string => Boolean(value)))]
-  const translate = (values: string[], translations: Record<string, string>) => values.map(value => translations[value] || value).join(' · ')
-  const prices = cup.divisions.map(division => division.price ?? cup.price).filter((price): price is number => price != null)
-  if (!prices.length && cup.price != null) prices.push(cup.price)
-  const cupActivities = activities.filter(activity => activity.cupId === cup.id)
-  const starts = unique(cupActivities.filter(activity => activity.startDate && activity.startTime).map(activity => formatWhen(activity.startDate, activity.startTime, locale)))
-  // An organizer address is not necessarily the competition venue.
-  const venues = unique(cupActivities.map(activity => [activity.venueName, activity.address?.street, activity.address?.postCode, activity.address?.city].filter(Boolean).join(', ')))
+  const genders = [...new Set(cup.divisions.map(division => genderNames[division.targetGender || '']?.[locale]).filter(Boolean))]
+  const levels = [...new Set(cup.divisions.map(division => levelNames[division.skillLevel || '']?.[locale]).filter(Boolean))]
+  const shuttles = [...new Set(cup.divisions.map(division => division.title.match(/\b(nylon|feather)\b/i)?.[1]?.toLowerCase()).filter(Boolean))]
+  const isGaruda = cup.id === CUP_ID
+  // Garuda Open markets all classes as doubles; some feather divisions currently use SQUAD internally.
+  const doubles = isGaruda || (cup.divisions.length > 0 && cup.divisions.every(division => division.targetAudience === 'DUO'))
   const facts = [
-    { label: labels.sport, value: cup.category },
-    { label: labels.fee, value: prices.length ? `${dict.common.from} ${formatPrice(Math.min(...prices), cup.currency, dict.common.free)}` : undefined },
-    { label: labels.categories, value: translate(unique(cup.divisions.map(division => division.targetGender)), labels.genders) },
-    { label: labels.levels, value: translate(unique(cup.divisions.map(division => division.skillLevel)), labels.skills) },
-    { label: labels.starts, value: starts.join(' · ') },
-    { label: labels.venues, value: venues.join(' · ') },
-  ].filter(fact => fact.value)
-  if (!cup.description?.trim() && !facts.length) return null
+    { icon: UsersRound, title: locale === 'sv' ? 'Spelform' : 'Format', detail: doubles ? (locale === 'sv' ? 'Dubbel för två spelare' : 'Doubles for two players') : `${cup.divisions.length} ${locale === 'sv' ? 'klasser' : 'divisions'}` },
+    { icon: Layers3, title: locale === 'sv' ? 'Kategorier' : 'Categories', detail: genders.join(' · ') || (locale === 'sv' ? 'Se klasserna nedan' : 'See divisions below') },
+    { icon: BarChart3, title: locale === 'sv' ? 'Nivåer' : 'Skill levels', detail: levels.join(' · ') || (locale === 'sv' ? 'Se klasserna nedan' : 'See divisions below') },
+    { icon: Feather, title: locale === 'sv' ? 'Bolltyp' : 'Shuttle type', detail: shuttles.length ? shuttles.map(value => value === 'nylon' ? (locale === 'sv' ? 'Nylon' : 'Nylon') : (locale === 'sv' ? 'Fjäder' : 'Feather')).join(' · ') : (locale === 'sv' ? 'Beror på klass' : 'Varies by division') },
+  ]
 
-  return (
-    <section id="cup-information" aria-labelledby="cup-information-heading" className="page-container scroll-mt-24 pt-10 sm:pt-12">
-      <h2 id="cup-information-heading" className="text-2xl font-bold tracking-tight">{labels.title}</h2>
-      {cup.description?.trim() && <p className="mt-5 max-w-prose whitespace-pre-line break-words leading-relaxed text-muted-foreground">{cup.description}</p>}
-      <dl className="mt-6 grid gap-x-8 gap-y-6 border-y border-border py-6 sm:grid-cols-2 lg:grid-cols-3">
-        {facts.map(fact => <div key={fact.label} className="min-w-0">
-          <dt className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{fact.label}</dt>
-          <dd className="mt-2 break-words text-base font-semibold text-ink">{fact.value}</dd>
+  return <section id="cup-information" aria-labelledby="cup-information-heading" className="scroll-mt-24 border-y border-border bg-[#eaf7f3] py-8 sm:py-10">
+    <div className="page-container">
+      <h2 id="cup-information-heading" className="text-2xl font-black tracking-tight text-ink">{locale === 'sv' ? 'Innan du anmäler dig' : 'Before you register'}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{isGaruda
+        ? (locale === 'sv' ? 'Det här hjälper dig att välja rätt dubbelklass.' : 'What you need to choose the right doubles division.')
+        : (locale === 'sv' ? 'Välj den klass som passar dig.' : 'Choose the division that fits you.')}</p>
+      <div className="mt-7 grid gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+        {facts.map(({ icon: Icon, title, detail }) => <div key={title} className="flex items-start gap-3">
+          <Icon size={25} strokeWidth={1.8} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+          <div><h3 className="text-sm font-bold text-ink">{title}</h3><p className="mt-1 text-sm leading-snug text-muted-foreground">{detail}</p></div>
         </div>)}
-      </dl>
-      {prices.length > 1 && new Set(prices).size > 1 && <p className="mt-3 text-sm text-muted-foreground">{labels.feeNote}</p>}
-    </section>
-  )
+      </div>
+    </div>
+  </section>
 }

@@ -145,6 +145,11 @@ export interface MatchSummary {
   bracketSlot: number
 }
 
+export interface CupMatch extends MatchSummary {
+  divisionId: number
+  divisionTitle: string
+}
+
 export interface StorefrontDetail {
   organization: Storefront['organization']
   kind: 'LEAGUE' | 'TOURNAMENT' | 'EVENT'

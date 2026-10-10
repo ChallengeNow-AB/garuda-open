@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getDictionary, isLocale } from '@/lib/i18n'
-import { getCupDetailResult, getStorefrontResult } from '@/lib/api'
+import { getCupDetailResult, getCupMatchFeed, getStorefrontResult } from '@/lib/api'
 import { CUP_BANNER, CUP_ID, CUP_NAME, STOREFRONT_SLUG } from '@/lib/brand'
 import { CupDetail } from '@/components/cup-detail'
 import { cache } from 'react'
@@ -15,7 +15,7 @@ const getCupPageData = cache(async () => {
   return { storefront, cup }
 })
 
-type Props = { params: Promise<{ locale: string; slug: string }> }
+type Props = { params: Promise<{ locale: string; slug: string }>; searchParams: Promise<{ view?: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params
@@ -33,11 +33,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function StorefrontPage({ params }: Props) {
+export default async function StorefrontPage({ params, searchParams }: Props) {
   const { locale, slug } = await params
   if (!isLocale(locale) || slug !== STOREFRONT_SLUG) notFound()
   const dict = getDictionary(locale)
   const { cup, storefront } = await getCupPageData()
+  const requestedView = (await searchParams).view
+  const view = requestedView === 'matches' || requestedView === 'results' ? requestedView : 'overview'
   if (cup.status !== 'ok') return (
     <section className="page-container py-16">
       <h1 className="text-4xl font-black">{CUP_NAME}</h1>
@@ -46,6 +48,7 @@ export default async function StorefrontPage({ params }: Props) {
         : 'Cup information is unavailable right now. Please try again shortly.'}</p>
     </section>
   )
+  const feed = view === 'overview' ? undefined : await getCupMatchFeed(slug, cup.data)
   return <CupDetail cup={cup.data} locale={locale} slug={slug} dict={dict}
-    storefront={storefront.status === 'ok' ? storefront.data : undefined} landing />
+    storefront={storefront.status === 'ok' ? storefront.data : undefined} landing view={view} feed={feed} />
 }

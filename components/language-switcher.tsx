@@ -22,7 +22,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
   function switchTo(next: Locale) {
     const rest = pathname.replace(/^\/[^/]+/, '')
     document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=31536000; samesite=lax`
-    router.push(`/${next}${rest}`)
+    router.push(`/${next}${rest}${window.location.search}${window.location.hash}`)
     setOpen(false)
   }
 

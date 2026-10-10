@@ -6,7 +6,7 @@ import { CUP_NAME, STOREFRONT_SLUG } from '@/lib/brand'
 export function SiteFooter({ locale, dict, cupTitle = CUP_NAME }: { locale: Locale; dict: Dictionary; organization?: Storefront['organization']; cupTitle?: string }) {
   return (
     <footer className="border-t border-border bg-white text-ink">
-      <div className="page-container grid gap-8 py-9 sm:grid-cols-[1fr_auto] sm:items-end">
+      <div className="page-container grid gap-5 py-7 sm:grid-cols-[1fr_auto] sm:items-end sm:gap-8 sm:py-9">
         <div>
           <Link href={`/${locale}/${STOREFRONT_SLUG}`} className="inline-flex flex-col leading-none">
             <span className="text-lg font-black uppercase tracking-tight">{cupTitle}</span>

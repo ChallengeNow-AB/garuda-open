@@ -1,4 +1,4 @@
-import type { Club, Cup, Storefront, StorefrontDetail } from './types'
+import type { Club, Cup, CupMatch, Storefront, StorefrontDetail } from './types'
 import { STOREFRONT_NAME, STOREFRONT_SLUG } from './brand'
 
 const API_URL = (process.env.CN_API_URL ?? 'https://apiv2.challengenow.se').replace(/\/$/, '')
@@ -61,6 +61,20 @@ export function getStorefrontDetailResult(slug: string, kind: DetailKind, id: nu
 
 export function getCupDetailResult(slug: string, id: number): Promise<StorefrontApiResult<Cup>> {
   return cnGetResult<Cup>(`/api/storefronts/${encodeURIComponent(slug)}/cups/${id}`)
+}
+
+/** A cup is a collection of tournament divisions. Match data lives on each division. */
+export async function getCupMatchFeed(slug: string, cup: Cup): Promise<{ matches: CupMatch[]; unavailable: boolean }> {
+  const details = await Promise.all(cup.divisions.map(async division => ({
+    division,
+    result: await getStorefrontDetailResult(slug, 'tournament', division.id),
+  })))
+  return {
+    matches: details.flatMap(({ division, result }) => result.status === 'ok'
+      ? result.data.matches.map(match => ({ ...match, divisionId: division.id, divisionTitle: division.title }))
+      : []),
+    unavailable: details.some(({ result }) => result.status === 'error'),
+  }
 }
 
 export async function getClubs(): Promise<Club[]> {

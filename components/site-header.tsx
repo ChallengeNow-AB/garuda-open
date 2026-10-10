@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Menu, X } from 'lucide-react'
 import type { Dictionary, Locale } from '@/lib/i18n'
 import type { Storefront } from '@/lib/types'
@@ -20,11 +21,30 @@ export function SiteHeader({
   cupTitle?: string
 }) {
   const [open, setOpen] = useState(false)
+  const [hash, setHash] = useState('')
+  const [view, setView] = useState('')
+  const pathname = usePathname()
+  useEffect(() => { document.documentElement.lang = locale }, [locale])
+  useEffect(() => {
+    const update = () => {
+      setHash(window.location.hash)
+      setView(new URLSearchParams(window.location.search).get('view') || '')
+    }
+    update()
+    window.addEventListener('hashchange', update)
+    window.addEventListener('popstate', update)
+    return () => {
+      window.removeEventListener('hashchange', update)
+      window.removeEventListener('popstate', update)
+    }
+  }, [pathname])
   const home = `/${locale}/${STOREFRONT_SLUG}`
   const links = [
-    { href: '#cup-information', label: locale === 'sv' ? 'Cupinformation' : 'Cup information', visible: true },
-    { href: '#registration', label: locale === 'sv' ? 'Klasser' : 'Divisions', visible: true },
-  ].filter(link => link.visible)
+    { href: home, label: locale === 'sv' ? 'Översikt' : 'Overview', active: !view && hash !== '#registration' },
+    { href: `${home}#registration`, label: locale === 'sv' ? 'Anmälan' : 'Register', active: !view && hash === '#registration' },
+    { href: `${home}?view=matches`, label: locale === 'sv' ? 'Matcher' : 'Matches', active: view === 'matches' },
+    { href: `${home}?view=results`, label: locale === 'sv' ? 'Resultat' : 'Results', active: view === 'results' },
+  ]
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur-xl">
@@ -39,8 +59,8 @@ export function SiteHeader({
             <span className="mt-1 hidden text-[10px] font-bold uppercase tracking-[.15em] text-brand sm:block">Komunitas Badminton Stockholm</span>
           </span>
         </Link>
-        <nav className="hidden items-center gap-7 lg:flex" aria-label={dict.nav.mainMenu}>
-          {links.map(link => <Link key={link.href} href={`${home}${link.href}`} className="text-sm font-bold text-ink/70 transition hover:text-brand">{link.label}</Link>)}
+        <nav className="hidden h-full items-center gap-7 lg:flex" aria-label={dict.nav.mainMenu}>
+          {links.map(link => <Link key={link.href} href={link.href} aria-current={link.active ? 'page' : undefined} onClick={() => { setView(link.href.includes('view=matches') ? 'matches' : link.href.includes('view=results') ? 'results' : ''); setHash(link.href.includes('#registration') ? '#registration' : '') }} className={`inline-flex h-full items-center border-b-[3px] pt-[3px] text-sm font-bold transition hover:text-brand ${link.active ? 'border-brand text-brand' : 'border-transparent text-ink/70'}`}>{link.label}</Link>)}
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher locale={locale} />
@@ -52,7 +72,7 @@ export function SiteHeader({
       {open && (
         <nav className="border-t border-border bg-white py-4 lg:hidden" aria-label={dict.nav.mainMenu}>
           <div className="page-container grid gap-1">
-            {links.map(link => <Link key={link.href} href={`${home}${link.href}`} onClick={() => setOpen(false)} className="rounded-xl px-4 py-3 text-base font-bold text-ink transition hover:bg-brand-tint hover:text-brand">{link.label}</Link>)}
+            {links.map(link => <Link key={link.href} href={link.href} onClick={() => { setOpen(false); setView(link.href.includes('view=matches') ? 'matches' : link.href.includes('view=results') ? 'results' : ''); setHash(link.href.includes('#registration') ? '#registration' : '') }} className="rounded-xl px-4 py-3 text-base font-bold text-ink transition hover:bg-brand-tint hover:text-brand">{link.label}</Link>)}
           </div>
         </nav>
       )}
