@@ -21,7 +21,7 @@ type Props = {
 
 
 const controlClass = 'h-12 w-full min-w-0 rounded-lg border border-border bg-white px-3 text-base font-normal text-ink transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-60'
-const actionClass = 'inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-ink px-6 py-3 text-base font-semibold text-white transition hover:bg-brand disabled:cursor-wait disabled:opacity-60'
+const actionClass = 'inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-ink px-7 py-3 text-base font-bold text-white transition hover:bg-brand disabled:cursor-wait disabled:opacity-60'
 
 type RegistrationResult = { registration?: { team?: { name?: string } } }
 const TEAM_TYPES = new Set(['INDIVIDUAL', 'SQUAD', 'DUO'])
@@ -74,6 +74,12 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
   const selected = filtered.find(division => String(division.id) === divisionId) ?? filtered[0]
   const levels = [...new Set(availableDivisions.map(division => division.skillLevel).filter(Boolean))] as string[]
   const genders = [...new Set(availableDivisions.map(division => division.targetGender).filter(Boolean))] as string[]
+  const divisionGroups = (['INDIVIDUAL', 'DUO', 'SQUAD', 'OTHER'] as const)
+    .map(format => ({
+      format,
+      items: filtered.filter(division => (division.targetAudience || 'OTHER') === format),
+    }))
+    .filter(group => group.items.length > 0)
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -163,9 +169,47 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
   }
 
   return (
-    <form onSubmit={submit} className="space-y-7">
-      <fieldset disabled={submitting || locked}>
-        <legend className="text-lg font-semibold">{words.account}</legend>
+    <form onSubmit={submit} className="space-y-9">
+      {divisions.length > 1 && <fieldset disabled={submitting || locked} className="space-y-6">
+        <legend className="sr-only">{words.select}</legend>
+        {(levels.length > 1 || genders.length > 1) && <div className="grid gap-4 sm:max-w-xl sm:grid-cols-2">
+          {levels.length > 1 && <label className="grid gap-2 text-sm font-medium">{words.level}
+            <select value={level} onChange={event => { setLevel(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
+              <option value="">{words.all}</option>{levels.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
+            </select>
+          </label>}
+          {genders.length > 1 && <label className="grid gap-2 text-sm font-medium">{words.gender}
+            <select value={gender} onChange={event => { setGender(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
+              <option value="">{words.all}</option>{genders.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
+            </select>
+          </label>}
+        </div>}
+        {filtered.length === 0 ? (
+          <p role="status" className="text-sm text-muted-foreground">{words.noMatch} <button type="button" onClick={() => { setLevel(''); setGender('') }} className="font-medium text-brand underline underline-offset-4">{words.reset}</button></p>
+        ) : divisionGroups.map(group => (
+          <div key={group.format} className="overflow-hidden rounded-2xl border border-border bg-white">
+            <div className="border-b border-border bg-[#f7faf7] px-5 py-4 text-sm font-black uppercase tracking-widest text-brand">
+              {labels[group.format] || (locale === 'sv' ? 'Övriga klasser' : 'Other divisions')}
+            </div>
+            <div className="grid gap-px bg-border sm:grid-cols-2">
+              {group.items.map(division => <label key={division.id} className="flex cursor-pointer items-start gap-4 bg-white p-5 transition hover:bg-brand-tint has-[:checked]:bg-brand-tint">
+                <input type="radio" name="division" value={division.id} checked={selected?.id === division.id}
+                  onChange={() => { setDivisionId(String(division.id)); idempotencyKey.current = null }}
+                  className="mt-1 h-5 w-5 shrink-0 accent-[var(--brand)]" />
+                <span className="min-w-0 flex-1">
+                  <strong className="block text-base text-ink">{division.title}</strong>
+                  <span className="mt-1 block text-sm text-muted-foreground">{[division.targetGender, division.skillLevel].filter(Boolean).map(value => labels[value!] ?? value).join(' · ')}</span>
+                  {division.capacity != null && <span className="mt-2 block text-xs text-muted-foreground">{copy.spotsLeft.replace('{0}', String(Math.max(0, division.capacity - division.joined)))}</span>}
+                </span>
+                <span className="shrink-0 rounded-full bg-accent/60 px-3 py-1 text-sm font-bold text-ink">{formatPrice(division.price ?? fallbackPrice, currency, dict.common.free)}</span>
+              </label>)}
+            </div>
+          </div>
+        ))}
+      </fieldset>}
+
+      <fieldset disabled={submitting || locked} className="border-t border-border pt-8">
+        <legend className="text-xl font-bold text-ink">{words.account}</legend>
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
           {(['existing', 'new'] as const).map(choice => (
             <label key={choice} className="inline-flex cursor-pointer items-center gap-3 text-sm font-medium">
@@ -182,31 +226,6 @@ export function CupRegistrationForm({ cupTitle, currency, fallbackPrice, divisio
         <p className="text-sm leading-relaxed text-muted-foreground">
           {accountChoice === 'new' ? words.newHint : words.appHint}
         </p>
-
-        {divisions.length > 1 && <fieldset disabled={submitting || locked} className="space-y-4 border-t border-border pt-6">
-          <legend className="sr-only">{words.select}</legend>
-          <div className="grid grid-cols-2 gap-4">
-            <label className="grid gap-2 text-sm font-medium">{words.level}
-              <select value={level} onChange={event => { setLevel(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
-                <option value="">{words.all}</option>{levels.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm font-medium">{words.gender}
-              <select value={gender} onChange={event => { setGender(event.target.value); setDivisionId(''); idempotencyKey.current = null }} className={controlClass}>
-                <option value="">{words.all}</option>{genders.map(value => <option key={value} value={value}>{labels[value] ?? value}</option>)}
-              </select>
-            </label>
-          </div>
-          {filtered.length === 0 ? (
-            <p role="status" className="text-sm text-muted-foreground">{words.noMatch} <button type="button" onClick={() => { setLevel(''); setGender('') }} className="font-medium text-brand underline underline-offset-4">{words.reset}</button></p>
-          ) : (
-            <label className="grid gap-2 text-sm font-medium">{words.select}
-              <select name="division" value={selected?.id ?? ''} onChange={event => { setDivisionId(event.target.value); idempotencyKey.current = null }} className={controlClass}>
-                {filtered.map(division => <option key={division.id} value={division.id}>{division.title}</option>)}
-              </select>
-            </label>
-          )}
-        </fieldset>}
 
         {selected && <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-5 text-sm" aria-live="polite">
           <span className="text-muted-foreground">{locale === 'sv' ? 'Anmälningsavgift' : 'Entry fee'}</span>
